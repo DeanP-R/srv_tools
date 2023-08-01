@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 """
 Copyright (c) 2012,
 Systems, Robotics and Vision Group
@@ -39,30 +39,42 @@ import os
 import sys
 import argparse
 
-def extract_topics(inbag,outbag,topics):
-  rospy.loginfo('   Processing input bagfile: %s', inbag)
-  rospy.loginfo('  Writing to output bagfile: %s', outbag)
-  rospy.loginfo('          Extracting topics: %s', topics)
+def extract_topics(inbag, outbag, topics):
+    rospy.loginfo('   Processing input bagfile: %s', inbag)
+    rospy.loginfo('  Writing to output bagfile: %s', outbag)
+    rospy.loginfo('          Extracting topics: %s', topics)
 
-  outbag = rosbag.Bag(outbag,'w')
-  for topic, msg, t in rosbag.Bag(inbag,'r').read_messages():
-    if topic in topics:
-      outbag.write(topic, msg, t)
-  rospy.loginfo('Closing output bagfile and exit...')
-  outbag.close();
+    outbag = rosbag.Bag(outbag,'w')
+    
+    total_messages = rosbag.Bag(inbag,'r').get_message_count()
+    processed_messages = 0
+    
+    for topic, msg, t in rosbag.Bag(inbag,'r').read_messages():
+        try:
+            if topic in topics:
+                outbag.write(topic, msg, t)
+                processed_messages += 1
+                if processed_messages % 10 == 0:
+                    rospy.loginfo('Processed %s out of %s messages...', processed_messages, total_messages)
+        except Exception as e:
+            rospy.logerr('Error processing message from topic %s at time %s', topic, t)
+            rospy.logerr(str(e))
+    rospy.loginfo('Closing output bagfile and exit...')
+    outbag.close();
+
 
 if __name__ == "__main__":
-  rospy.init_node('extract_topics')
-  parser = argparse.ArgumentParser(
-      description='Extracts topics from a bagfile into another bagfile.')
-  parser.add_argument('inbag', help='input bagfile')
-  parser.add_argument('outbag', help='output bagfile')
-  parser.add_argument('topics', nargs='+', help='topics to extract')
-  args = parser.parse_args()
+    rospy.init_node('extract_topics')
+    parser = argparse.ArgumentParser(
+        description='Extracts topics from a bagfile into another bagfile.')
+    parser.add_argument('inbag', help='input bagfile')
+    parser.add_argument('outbag', help='output bagfile')
+    parser.add_argument('topics', nargs='+', help='topics to extract')
+    args = parser.parse_args()
 
-  try:
-    extract_topics(args.inbag,args.outbag,args.topics)
-  except Exception, e:
-    import traceback
-    traceback.print_exc()
+    try:
+        extract_topics(args.inbag,args.outbag,args.topics)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
 

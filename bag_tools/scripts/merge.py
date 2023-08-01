@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 """
 Copyright (c) 2015,
 Enrique Fernandez Perdomo
@@ -38,40 +38,40 @@ import os
 import sys
 
 def merge(inbags, outbag='output.bag', topics=None, exclude_topics=[], raw=True):
-  # Open output bag file:
-  try:
-    out = rosbag.Bag(outbag, 'a' if os.path.exists(outbag) else 'w')
-  except IOError as e:
-    print('Failed to open output bag file %s!: %s' % (outbag, e.message), file=sys.stderr)
-    return 127
-
-  # Write the messages from the input bag files into the output one:
-  for inbag in inbags:
+    # Open output bag file:
     try:
-      print('   Processing input bagfile: %s' % inbag)
-      for topic, msg, t in rosbag.Bag(inbag, 'r').read_messages(topics=topics, raw=raw):
-        if topic not in args.exclude_topics:
-          out.write(topic, msg, t, raw=raw)
+        out = rosbag.Bag(outbag, 'a' if os.path.exists(outbag) else 'w')
     except IOError as e:
-      print('Failed to open input bag file %s!: %s' % (inbag, e.message), file=sys.stderr)
-      return 127
+        print('Failed to open output bag file %s!: %s' % (outbag, e), file=sys.stderr)
+        return 127
 
-  out.close()
+    # Write the messages from the input bag files into the output one:
+    for inbag in inbags:
+        try:
+            print('   Processing input bagfile: %s' % inbag)
+            for topic, msg, t in rosbag.Bag(inbag, 'r').read_messages(topics=topics, raw=raw):
+                if topic not in exclude_topics:
+                    out.write(topic, msg, t, raw=raw)
+        except IOError as e:
+            print('Failed to open input bag file %s!: %s' % (inbag, e), file=sys.stderr)
+            return 127
 
-  return 0
+    out.close()
+
+    return 0
 
 
 if __name__ == "__main__":
-  parser = argparse.ArgumentParser(
-      description='Merge multiple bag files into a single one.')
-  parser.add_argument('inbag', help='input bagfile(s)', nargs='+')
-  parser.add_argument('--output', help='output bag file', default='output.bag')
-  parser.add_argument('--topics', help='topics to merge from the input bag files', nargs='+', default=None)
-  parser.add_argument('--exclude_topics', help='topics not to merge from the input bag files', nargs='+', default=[])
-  args = parser.parse_args()
+    parser = argparse.ArgumentParser(description='Merge multiple bag files into a single one.')
+    parser.add_argument('inbag', help='input bagfile(s)', nargs='+')
+    parser.add_argument('--output', help='output bag file', default='output.bag')
+    parser.add_argument('--topics', help='topics to merge from the input bag files', nargs='+', default=None)
+    parser.add_argument('--exclude_topics', help='topics not to merge from the input bag files', nargs='+', default=[])
+    args = parser.parse_args()
 
-  try:
-    sys.exit(merge(args.inbag, args.output, args.topics, args.exclude_topics))
-  except Exception, e:
-    import traceback
-    traceback.print_exc()
+    try:
+        sys.exit(merge(args.inbag, args.output, args.topics, args.exclude_topics))
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+
